@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KP Mannheim — Mündliche Prüfung Simulator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon"><i class="ti ti-stethoscope" style="font-size:18px;" aria-hidden="true"></i></div>
+      <div>
+        <p style="font-weight:500; font-size:15px; margin:0;">KP Mannheim — Mündliche Prüfung</p>
+        <p style="font-size:13px; color:var(--text-secondary); margin:0;">Fallbasierter Trainer für die Kenntnisprüfung</p>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="btn-prev-case" aria-label="Vorheriger Fall"><i class="ti ti-arrow-left" aria-hidden="true"></i> Fall</button>
+      <button id="btn-next-case">Fall <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      <button id="btn-random-case" aria-label="Zufälliger Fall"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+    </div>
+  </div>
+
+  <p id="progress" class="progress-line"></p>
+
+  <div class="split">
+    <div class="panel">
+      <p id="case-title" class="case-title"></p>
+      <p id="vignette" class="vignette"></p>
+      <div class="tracker-head">
+        <p class="small muted" style="margin:0 0 8px;">Fortschritt</p>
+        <div id="phase-tracker"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:10px;">
+        <span id="phase-badge" class="badge"></span>
+        <p id="question-text" class="question-text"></p>
+        <details id="model-answer" class="model-answer hidden">
+          <summary>Musterlösung / erwartete Kernpunkte anzeigen</summary>
+          <div id="model-answer-body" class="ma-body"></div>
+        </details>
+      </div>
+
+      <div class="row" style="margin-bottom:8px;">
+        <button id="btn-read"><i class="ti ti-player-play" aria-hidden="true"></i> Vorlesen</button>
+        <button id="btn-record"><i class="ti ti-microphone" aria-hidden="true"></i> Aufnehmen</button>
+        <span id="rec-status" class="hidden">Zuhören …</span>
+        <span id="timer" class="spacer mono muted small">00:00</span>
+      </div>
+
+      <textarea id="answer" class="answer" rows="6" placeholder="Antwort tippen oder diktieren …"></textarea>
+      <p id="rec-warning" class="small muted hidden" style="margin:0 0 8px;">Spracheingabe ist in diesem Browser nicht verfügbar. Nutzen Sie die OS-Diktierfunktion (Fn Fn auf Mac, Win+H auf Windows) oder tippen Sie.</p>
+
+      <div class="row">
+        <button id="btn-feedback" style="border:0.5px solid var(--border-strong);"><i class="ti ti-send" aria-hidden="true"></i> Bewertung anfordern</button>
+        <button id="btn-prev-q"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+        <button id="btn-next-q">Nächste Frage <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      </div>
+
+      <div id="feedback-box" class="hidden">
+        <p class="fb-text" id="feedback-text"></p>
+      </div>
+
+      <div id="copy-fallback" class="hidden">
+        <p class="small" style="color:var(--text-secondary); margin:0 0 8px;">Keine direkte KI-Anbindung. Kopieren Sie den Text und fügen Sie ihn in Claude/ChatGPT ein, um eine prüfernahe Bewertung zu erhalten.</p>
+        <textarea id="copy-text" rows="8" readonly></textarea>
+        <button id="btn-copy" style="margin-top:8px;"><i class="ti ti-copy" aria-hidden="true"></i> In Zwischenablage kopieren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API key settings (session-only, in-memory) -->
+  <details class="settings">
+    <summary><i class="ti ti-key" aria-hidden="true"></i> KI-Bewertung: API-Schlüssel (optional)</summary>
+    <div class="warn">
+      <strong>Sicherheitshinweis.</strong> Der Schlüssel wird nur im Arbeitsspeicher gehalten, niemals gespeichert, und geht beim Neuladen verloren.
+      Verwenden Sie Ihren <em>eigenen</em> Schlüssel für Ihre <em>eigene</em> Sitzung. Client-seitige Aufrufe sind im Netzwerk-Tab sichtbar —
+      hinterlegen Sie hier keinen geteilten Schlüssel und veröffentlichen Sie ihn nicht. Für eine geteilte Bereitstellung siehe README (Proxy).
+    </div>
+    <div class="field">
+      <label for="provider-select">Anbieter</label>
+      <select id="provider-select">
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="api-key-input">API-Schlüssel</label>
+      <input id="api-key-input" type="password" autocomplete="off" placeholder="sk-… (nur diese Sitzung)">
+    </div>
+    <div class="field">
+      <label for="model-input">Modell (optional)</label>
+      <input id="model-input" type="text" autocomplete="off" placeholder="gpt-4o-mini">
+    </div>
+    <div class="row">
+      <button id="save-key"><i class="ti ti-check" aria-hidden="true"></i> Schlüssel übernehmen</button>
+      <button id="clear-key"><i class="ti ti-trash" aria-hidden="true"></i> Löschen</button>
+      <span id="key-status" class="key-status spacer"></span>
+    </div>
+  </details>
+
+</div>
+
+<script src="data/cases.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/feedback.js"></script>
+<script src="js/ui.js"></script>
+<script>KPApp.init();</script>
+</body>
+</html>
