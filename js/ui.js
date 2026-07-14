@@ -142,7 +142,7 @@
   function showCopyFallback(text) {
     $("copy-fallback").classList.remove("hidden");
     $("copy-text").value = text;
-    $("copy-fallback").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if ($("copy-fallback").scrollIntoView) $("copy-fallback").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function requestFeedback() {
