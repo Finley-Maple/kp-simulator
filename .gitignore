@@ -1,0 +1,19 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node (only if you later add tooling)
+node_modules/
+npm-debug.log*
+
+# Never commit secrets
+.env
+.env.*
+*.key
+secrets.*
+
+# Source protocols (not redistributed with the repo by default)
+KP*Mannheim.pdf
