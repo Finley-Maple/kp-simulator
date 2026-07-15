@@ -9,17 +9,22 @@ No build step. Plain HTML/CSS/vanilla JS. Open `index.html` and it runs.
 
 ## Features
 
-- **5 canonical cases** covering the exam's five recurring Teil-1 scenarios
-  (Divertikulitis, Pyelonephritis, Bandscheibenvorfall, Cholezystitis,
-  Hyperthyreose), each with 4 phases — Anamnese, Radiologie, Chirurgie,
-  Innere/Pharma/Notfall — and **60 questions total** with model answers.
+- **10 cases, 176 questions** — all with model answers. Cases 1–5 reproduce the
+  five recurring Teil-1 anamnesis scenarios (Divertikulitis, Pyelonephritis,
+  Bandscheibenvorfall, Cholezystitis, Hyperthyreose). Cases 6–10 are
+  discipline **Fragenkataloge** (Radiologie, Chirurgie, Innere/Kardiologie,
+  Labormedizin, Notfall/Pharmakotherapie) that aim to cover *every* distinct
+  question/topic asked in the oral stations across all 92 protocols, including
+  one-offs. See `docs/data-provenance.md`.
 - **Read-aloud** — neural **OpenAI TTS** (natural voice, clean stop) when an
   OpenAI key is present; automatically falls back to the browser's Web Speech
   voice otherwise. Pick a voice in the settings panel.
 - **Recording** — records your **actual audio** locally via `MediaRecorder`
-  (proper start/stop, replayable), then **transcribes** it into the answer box
-  via OpenAI when a key is present. With no key, the recording is still kept for
-  replay and you type your answer.
+  (proper start/stop, replayable), then **transcribes** it into the answer box.
+  Transcription backend is chosen automatically: **OpenAI** speech-to-text if an
+  OpenAI key is set, otherwise **local Whisper** (Transformers.js, WebGPU/WASM) —
+  fully offline, free, audio never leaves the device. First local use downloads a
+  ~145 MB model once; needs a modern browser (Chrome/Edge with WebGPU works best).
 - **Feedback in three modes** (auto-selected): direct LLM call with your own key,
   the Cowork chat host (`sendPrompt`), or copy-to-clipboard for any assistant.
 - **Progress tracking** per phase (localStorage, non-sensitive).

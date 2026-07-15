@@ -58,6 +58,28 @@ examiners then quiz you across the whole shared pool regardless.
   (AMBOSS, AWMF-Leitlinien) before use. This is a preparation aid, not a
   clinical reference.
 
+## Complete question bank (cases 6–10)
+
+To make the tool exhaustive, every distinct question/topic in the oral stations
+was extracted from all 92 protocols (≈966 explicit "?" questions plus topic-style
+prompts; ≈705 after cleaning dialogue/OCR noise) and consolidated into five
+discipline **Fragenkataloge**:
+
+| Case | Discipline | Questions |
+|---|---|---|
+| 6 | Radiologie (Thorax, Abdomen, Skelett, Schädel-CT, KM, Strahlenschutz) | 29 |
+| 7 | Chirurgie (Kolon, Gallenwege, Ileus, Hernien, Schilddrüse, Anatomie) | 28 |
+| 8 | Innere/Kardiologie (ACS, Rhythmus, HI, Hypertonie, LAE/TVT, Pneumonie, Endokrin) | 26 |
+| 9 | Labormedizin (Anämie, Blutbild, Gerinnung, Elektrolyte, Leber/Pankreas) | 19 |
+| 10 | Notfall & Pharmakotherapie (Analgesie, Antibiotika, Notfälle, Aufklärung) | 14 |
+
+Combined with the 60 questions in cases 1–5, the tool holds **176 questions with
+model answers**. Near-identical repeats across reports were merged into one
+canonical question; every *distinct* clinical question — including one-offs
+(Holiday-Heart, Homans/Payr/Meyer, De-Ritis, KDIGO, Intrinsic Factor, Volvulus,
+Pneumozephalus, Argatroban/4T-Score, Reynolds-Pentade, TEVAR, …) — is represented.
+Automated coverage checks confirm all recurring and long-tail topics appear.
+
 ## Reproducing / extending
 
 The raw per-report text files and frequency analysis were produced by the

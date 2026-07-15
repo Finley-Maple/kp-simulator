@@ -132,6 +132,62 @@
     });
   }
 
+  // ---- Local transcription (Whisper via Transformers.js, WebGPU/WASM) ------
+  // Fully offline after a one-time model download; audio never leaves the device.
+  var WHISPER_CDN = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm";
+  var WHISPER_MODEL = "Xenova/whisper-base"; // multilingual; good German, ~145 MB
+  var whisperPipe = null, whisperLoading = null;
+
+  function localTranscriptionSupported() {
+    // Needs WebAssembly + an AudioContext (WebGPU is used when available, else WASM).
+    var hasAudioCtx = typeof window.AudioContext !== "undefined" || typeof window.webkitAudioContext !== "undefined";
+    return typeof WebAssembly !== "undefined" && hasAudioCtx;
+  }
+
+  function loadWhisper(onProgress) {
+    if (whisperPipe) return Promise.resolve(whisperPipe);
+    if (whisperLoading) return whisperLoading;
+    whisperLoading = import(/* webpackIgnore: true */ WHISPER_CDN).then(function (mod) {
+      return mod.pipeline("automatic-speech-recognition", WHISPER_MODEL, { device: "webgpu", progress_callback: onProgress })
+        .catch(function () {
+          // Fall back to WASM if WebGPU is unavailable/unsupported.
+          return mod.pipeline("automatic-speech-recognition", WHISPER_MODEL, { progress_callback: onProgress });
+        });
+    }).then(function (p) { whisperPipe = p; return p; });
+    return whisperLoading;
+  }
+
+  // Decode a recorded Blob to mono 16 kHz Float32 PCM (what Whisper expects).
+  function blobToPcm16k(blob) {
+    return blob.arrayBuffer().then(function (buf) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      var ctx = new AC();
+      return ctx.decodeAudioData(buf).then(function (audioBuf) {
+        try { ctx.close(); } catch (e) {}
+        var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        var frames = Math.ceil(audioBuf.duration * 16000);
+        var off = new OAC(1, frames, 16000);
+        var src = off.createBufferSource();
+        src.buffer = audioBuf;
+        src.connect(off.destination);
+        src.start(0);
+        return off.startRendering().then(function (rendered) { return rendered.getChannelData(0); });
+      });
+    });
+  }
+
+  function transcribeLocal(blob, opts) {
+    opts = opts || {};
+    return loadWhisper(opts.onProgress).then(function (pipe) {
+      return blobToPcm16k(blob).then(function (pcm) {
+        return pipe(pcm, { language: "german", task: "transcribe", chunk_length_s: 30, stride_length_s: 5 });
+      });
+    }).then(function (out) {
+      var text = out && (typeof out.text === "string" ? out.text : (Array.isArray(out) && out[0] && out[0].text));
+      return (text || "").trim();
+    });
+  }
+
   window.KPAudio = {
     speak: speak,
     stopSpeak: stopSpeak,
@@ -141,6 +197,8 @@
     isRecording: isRecording,
     recordingSupported: recordingSupported,
     transcribe: transcribe,
+    transcribeLocal: transcribeLocal,
+    localTranscriptionSupported: localTranscriptionSupported,
     hasOpenAIKey: hasOpenAIKey
   };
 })();

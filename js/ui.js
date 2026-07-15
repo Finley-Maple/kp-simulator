@@ -128,20 +128,40 @@
       var a = $("answer-audio");
       a.src = URL.createObjectURL(blob);
       a.classList.remove("hidden");
-      // Transcribe into the answer box if an OpenAI key is available.
+      // Transcribe: OpenAI if a key is set, otherwise local Whisper (offline).
+      $("rec-note").classList.remove("hidden");
+      var insert = function (text) {
+        var existing = $("answer").value.trim();
+        $("answer").value = existing ? (existing + " " + text) : text;
+      };
+
       if (KPAudio.hasOpenAIKey()) {
-        $("rec-note").textContent = "Transkribiere …";
-        $("rec-note").classList.remove("hidden");
+        $("rec-note").textContent = "Transkribiere (OpenAI) …";
         KPAudio.transcribe(blob).then(function (text) {
-          var existing = $("answer").value.trim();
-          $("answer").value = existing ? (existing + " " + text) : text;
+          insert(text);
           $("rec-note").textContent = "Transkribiert. Aufnahme bleibt zum Abspielen erhalten.";
         }).catch(function (err) {
           $("rec-note").textContent = "Transkription fehlgeschlagen: " + err.message + " Aufnahme bleibt gespeichert; tippen Sie ggf. Ihre Antwort.";
         });
+      } else if (KPAudio.localTranscriptionSupported()) {
+        $("rec-note").textContent = "Lade lokales Spracherkennungsmodell (einmaliger Download) …";
+        KPAudio.transcribeLocal(blob, {
+          onProgress: function (p) {
+            if (p && p.status === "progress" && typeof p.progress === "number") {
+              $("rec-note").textContent = "Lade Spracherkennung … " + Math.round(p.progress) + "%";
+            } else if (p && p.status === "ready") {
+              $("rec-note").textContent = "Transkribiere lokal …";
+            }
+          }
+        }).then(function (text) {
+          insert(text);
+          $("rec-note").textContent = "Lokal transkribiert (offline). Aufnahme bleibt zum Abspielen erhalten.";
+        }).catch(function (err) {
+          $("rec-note").textContent = "Lokale Transkription fehlgeschlagen: " + err.message +
+            " Aufnahme bleibt gespeichert. Tipp: moderner Browser (Chrome/Edge) mit WebGPU, oder OpenAI-Schlüssel nutzen — oder Antwort tippen.";
+        });
       } else {
-        $("rec-note").textContent = "Aufnahme gespeichert (abspielbar). Für automatische Transkription einen OpenAI-Schlüssel hinterlegen — oder Antwort tippen.";
-        $("rec-note").classList.remove("hidden");
+        $("rec-note").textContent = "Aufnahme gespeichert (abspielbar). Automatische Transkription hier nicht verfügbar — OpenAI-Schlüssel hinterlegen oder Antwort tippen.";
       }
     }).catch(function (err) {
       resetRecordingUI();
@@ -182,16 +202,20 @@
     var flat = flatQuestions(c);
     if (state.qIdx >= flat.length) state.qIdx = flat.length - 1;
     var current = flat[state.qIdx];
-    var phaseShort = current.phaseName.split(":")[0];
+    // Show the station name (e.g. "Radiologie und Bildgebung") rather than the
+    // bare "Teil N" prefix.
+    var phaseStation = current.phaseName.indexOf(":") > -1
+      ? current.phaseName.substring(current.phaseName.indexOf(":") + 1).trim()
+      : current.phaseName;
 
     $("case-title").textContent = c.caseTitle;
     $("diagnosis-text").textContent = c.diagnosis || "—";
     $("vignette").textContent = c.initialVignette;
-    $("phase-badge").textContent = phaseShort;
+    $("phase-badge").textContent = phaseStation;
     $("question-text").textContent = current.q.text;
     applyExamMode();
     $("progress").textContent = "Fall " + (state.caseIdx + 1) + "/" + caseSeries.length +
-      " · " + phaseShort + " · Frage " + (state.qIdx + 1) + " von " + flat.length;
+      " · " + phaseStation + " · Frage " + (state.qIdx + 1) + " von " + flat.length;
     $("answer").value = "";
     $("btn-prev-q").disabled = (state.qIdx === 0);
     $("btn-next-q").disabled = (state.qIdx === flat.length - 1);
