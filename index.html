@@ -82,12 +82,14 @@
       <strong>Sicherheitshinweis.</strong> Der Schlüssel wird nur im Arbeitsspeicher gehalten, niemals gespeichert, und geht beim Neuladen verloren.
       Verwenden Sie Ihren <em>eigenen</em> Schlüssel für Ihre <em>eigene</em> Sitzung. Client-seitige Aufrufe sind im Netzwerk-Tab sichtbar —
       hinterlegen Sie hier keinen geteilten Schlüssel und veröffentlichen Sie ihn nicht. Für eine geteilte Bereitstellung siehe README (Proxy).
+      <br><br><strong>DeepSeek-Hinweis:</strong> deutlich günstiger, aber DeepSeek setzt möglicherweise keine CORS-Header — ein direkter Browser-Aufruf kann blockiert werden. Falls die Bewertung fehlschlägt, nutzen Sie OpenAI/Anthropic oder den Proxy aus dem README.
     </div>
     <div class="field">
       <label for="provider-select">Anbieter</label>
       <select id="provider-select">
         <option value="openai">OpenAI</option>
         <option value="anthropic">Anthropic</option>
+        <option value="deepseek">DeepSeek (günstig)</option>
       </select>
     </div>
     <div class="field">

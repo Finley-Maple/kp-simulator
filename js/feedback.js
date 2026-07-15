@@ -27,7 +27,15 @@
 
   var DEFAULT_MODELS = {
     openai: "gpt-4o-mini",
-    anthropic: "claude-3-5-haiku-latest"
+    anthropic: "claude-3-5-haiku-latest",
+    deepseek: "deepseek-v4-flash"
+  };
+
+  // OpenAI-compatible providers share the same request/response shape; only the
+  // base URL differs. DeepSeek's /chat/completions is OpenAI-compatible.
+  var OPENAI_COMPATIBLE_BASE = {
+    openai: "https://api.openai.com/v1",
+    deepseek: "https://api.deepseek.com/v1"
   };
 
   function setConfig(cfg) {
@@ -57,15 +65,17 @@
   }
 
   // ---- Direct LLM calls ----------------------------------------------------
-  function callOpenAI(prompt, model) {
-    return fetch("https://api.openai.com/v1/chat/completions", {
+  // Handles OpenAI and DeepSeek (both OpenAI-compatible).
+  function callOpenAICompatible(prompt, model, provider) {
+    var base = OPENAI_COMPATIBLE_BASE[provider] || OPENAI_COMPATIBLE_BASE.openai;
+    return fetch(base + "/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + state.apiKey
       },
       body: JSON.stringify({
-        model: model || DEFAULT_MODELS.openai,
+        model: model || DEFAULT_MODELS[provider],
         messages: [{ role: "user", content: prompt }],
         temperature: 0.3,
         max_tokens: 700
@@ -111,8 +121,13 @@
 
     if (hasKey()) {
       var model = state.model || DEFAULT_MODELS[state.provider];
-      var call = state.provider === "anthropic" ? callAnthropic : callOpenAI;
-      return call(prompt, model).then(function (feedback) {
+      var call;
+      if (state.provider === "anthropic") {
+        call = callAnthropic(prompt, model);
+      } else {
+        call = callOpenAICompatible(prompt, model, state.provider);
+      }
+      return call.then(function (feedback) {
         return { mode: "llm", text: feedback };
       });
     }

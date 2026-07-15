@@ -53,8 +53,12 @@ python3 -m http.server 8000
 
 The feedback flow works in three ways, tried in order:
 
-1. **Your own LLM key.** Open the "API-Schlüssel" panel, pick OpenAI or Anthropic,
-   paste a key. The app calls the provider directly and shows examiner feedback.
+1. **Your own LLM key.** Open the "API-Schlüssel" panel, pick OpenAI, Anthropic, or
+   DeepSeek, paste a key. The app calls the provider directly and shows examiner
+   feedback. DeepSeek is the cheapest option and is OpenAI-compatible (base URL
+   `https://api.deepseek.com/v1`, default model `deepseek-v4-flash`); note that
+   DeepSeek may not send CORS headers, so a direct browser call can be blocked —
+   if it fails, use OpenAI/Anthropic or route DeepSeek through the proxy below.
 2. **Cowork chat host.** If embedded in a host that provides `window.sendPrompt`,
    the answer is handed to that assistant.
 3. **Copy & paste.** Otherwise the app shows the prompt to paste into any assistant.
