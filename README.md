@@ -53,20 +53,42 @@ python3 -m http.server 8000
 
 The feedback flow works in three ways, tried in order:
 
-1. **Your own LLM key.** Open the "API-Schlüssel" panel, pick OpenAI, Anthropic, or
-   DeepSeek, paste a key. The app calls the provider directly and shows examiner
-   feedback. DeepSeek is the cheapest option and is OpenAI-compatible (base URL
-   `https://api.deepseek.com/v1`, default model `deepseek-v4-flash`); note that
-   DeepSeek may not send CORS headers, so a direct browser call can be blocked —
-   if it fails, use OpenAI/Anthropic or route DeepSeek through the proxy below.
+1. **Your own LLM key.** Open the "API-Schlüssel" panel, pick a provider, paste a
+   key. The app calls the provider directly and shows examiner feedback.
+
+   | Provider | Works in browser directly? | Notes |
+   |---|---|---|
+   | OpenAI | Yes | `gpt-4o-mini` default |
+   | Anthropic | Yes (opt-in header) | `claude-3-5-haiku-latest` default |
+   | Google Gemini | Sometimes (CORS-dependent) | free tier; `gemini-2.5-flash` default; key sent as header |
+   | DeepSeek | No (needs proxy) | cheapest; OpenAI-compatible; `deepseek-v4-flash` default |
+
+   **OpenAI and Anthropic** work from a static page today. **Gemini** and
+   **DeepSeek** can be blocked by CORS in the browser — if the call fails, either
+   use OpenAI/Anthropic, or set a **proxy URL** in the "Basis-URL" field (see the
+   proxy note below). Gemini's free tier makes it the cheapest option once proxied.
 2. **Cowork chat host.** If embedded in a host that provides `window.sendPrompt`,
    the answer is handed to that assistant.
 3. **Copy & paste.** Otherwise the app shows the prompt to paste into any assistant.
 
+By default the key lives **only in memory** and is cleared on refresh. Tick
+**"Auf diesem Gerät merken"** to persist it to `localStorage` so it survives
+refresh/restart — convenient on your own machine, but see the caveats below.
+
+**DeepSeek won't work as a direct browser call.** DeepSeek's API does not send
+CORS headers, so the browser blocks the request even with a valid key (you'll get
+a network error, now shown with an explanation). Two options: use OpenAI/Anthropic
+(both allow browser calls), or run DeepSeek behind a proxy and put the proxy's URL
+in the **"Basis-URL"** field (e.g. `https://your-worker.example.com/v1`). A minimal
+Cloudflare Worker that forwards to `https://api.deepseek.com/v1` and adds an
+`Access-Control-Allow-Origin` header is enough.
+
 ### Security model (important before you deploy publicly)
 
-- The key lives **only in memory**. It is never written to `localStorage`,
-  `sessionStorage`, cookies, or disk, and is cleared on refresh.
+- Memory-only by default; the "remember" option persists to `localStorage`.
+- A **persisted** key is readable by any script on this origin and by anyone with
+  access to the machine. Only tick "remember" on your own device — never on a
+  shared or public deployment.
 - It is entered per user, per session — **your** key for **your** session.
 - Any client-side call still exposes the key in the browser Network tab and to
   anyone at the machine while it's entered. **Never hard-code a shared key into

@@ -82,13 +82,14 @@
       <strong>Sicherheitshinweis.</strong> Der Schlüssel wird nur im Arbeitsspeicher gehalten, niemals gespeichert, und geht beim Neuladen verloren.
       Verwenden Sie Ihren <em>eigenen</em> Schlüssel für Ihre <em>eigene</em> Sitzung. Client-seitige Aufrufe sind im Netzwerk-Tab sichtbar —
       hinterlegen Sie hier keinen geteilten Schlüssel und veröffentlichen Sie ihn nicht. Für eine geteilte Bereitstellung siehe README (Proxy).
-      <br><br><strong>DeepSeek-Hinweis:</strong> deutlich günstiger, aber DeepSeek setzt möglicherweise keine CORS-Header — ein direkter Browser-Aufruf kann blockiert werden. Falls die Bewertung fehlschlägt, nutzen Sie OpenAI/Anthropic oder den Proxy aus dem README.
+      <br><br><strong>Anbieter-Hinweis:</strong> OpenAI und Anthropic funktionieren direkt im Browser. Gemini (Gratis-Kontingent) und DeepSeek (günstig) können durch CORS blockiert werden — falls die Bewertung fehlschlägt, nutzen Sie OpenAI/Anthropic oder tragen Sie eine Proxy-Basis-URL ein (siehe README).
     </div>
     <div class="field">
       <label for="provider-select">Anbieter</label>
       <select id="provider-select">
         <option value="openai">OpenAI</option>
         <option value="anthropic">Anthropic</option>
+        <option value="gemini">Google Gemini (Gratis-Kontingent)</option>
         <option value="deepseek">DeepSeek (günstig)</option>
       </select>
     </div>
@@ -100,6 +101,13 @@
       <label for="model-input">Modell (optional)</label>
       <input id="model-input" type="text" autocomplete="off" placeholder="gpt-4o-mini">
     </div>
+    <div class="field">
+      <label for="baseurl-input">Basis-URL (optional — z. B. Proxy für DeepSeek)</label>
+      <input id="baseurl-input" type="text" autocomplete="off" placeholder="https://ihr-proxy.example.com/v1">
+    </div>
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin:8px 0;">
+      <input id="remember-key" type="checkbox"> Auf diesem Gerät merken (übersteht Neuladen — nur eigenes Gerät)
+    </label>
     <div class="row">
       <button id="save-key"><i class="ti ti-check" aria-hidden="true"></i> Schlüssel übernehmen</button>
       <button id="clear-key"><i class="ti ti-trash" aria-hidden="true"></i> Löschen</button>

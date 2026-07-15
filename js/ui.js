@@ -178,8 +178,9 @@
   function refreshKeyStatus() {
     var el = $("key-status");
     if (KPFeedback.hasKey()) {
+      var where = KPFeedback.isRemembered() ? "auf diesem Gerät gespeichert" : "nur im Arbeitsspeicher";
       el.innerHTML = '<span style="color:var(--text-success);">● Schlüssel aktiv (' +
-        KPFeedback.getProvider() + ', nur im Arbeitsspeicher)</span>';
+        KPFeedback.getProvider() + ', ' + where + ')</span>';
     } else if (typeof window.sendPrompt === "function") {
       el.innerHTML = '<span class="muted">Kein Schlüssel — Bewertung läuft über den Chat-Host.</span>';
     } else {
@@ -191,7 +192,9 @@
     KPFeedback.setConfig({
       provider: $("provider-select").value,
       apiKey: $("api-key-input").value,
-      model: $("model-input").value
+      model: $("model-input").value,
+      baseUrl: $("baseurl-input").value,
+      remember: $("remember-key").checked
     });
     $("api-key-input").value = ""; // do not leave the key in the DOM
     refreshKeyStatus();
@@ -199,6 +202,7 @@
   function clearKey() {
     KPFeedback.clearKey();
     $("api-key-input").value = "";
+    $("remember-key").checked = false;
     refreshKeyStatus();
   }
 
@@ -240,6 +244,13 @@
     $("save-key").addEventListener("click", saveKey);
     $("clear-key").addEventListener("click", clearKey);
     $("provider-select").addEventListener("change", syncModelPlaceholder);
+
+    // Restore a remembered key (if the user previously opted in).
+    if (KPFeedback.loadPersisted()) {
+      $("provider-select").value = KPFeedback.getProvider();
+      $("remember-key").checked = true;
+      if (KPFeedback.getBaseUrl()) $("baseurl-input").value = KPFeedback.getBaseUrl();
+    }
 
     syncModelPlaceholder();
     refreshKeyStatus();
