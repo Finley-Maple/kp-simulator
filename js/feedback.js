@@ -94,6 +94,11 @@
   function getProvider() { return state.provider; }
   function isRemembered() { return state.remember; }
   function getBaseUrl() { return state.baseUrl; }
+  // Shared read-only view of the current config, used by the audio module
+  // (TTS + transcription) so it can reuse the same OpenAI key.
+  function getConfig() {
+    return { provider: state.provider, apiKey: state.apiKey, model: state.model, baseUrl: state.baseUrl };
+  }
 
   function buildPrompt(payload, instructions) {
     var lines = [
@@ -231,6 +236,7 @@
     getProvider: getProvider,
     isRemembered: isRemembered,
     getBaseUrl: getBaseUrl,
+    getConfig: getConfig,
     loadPersisted: loadPersisted,
     buildPrompt: buildPrompt,
     evaluate: evaluate,

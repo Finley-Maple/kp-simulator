@@ -30,6 +30,10 @@
 // [eckige Klammern] markieren Bild-/Blickdiagnose-Hinweise. Die Read-aloud-
 // Funktion entfernt sie automatisch.
 //
+// `caseTitle` enthält bewusst KEINE Diagnose (nur Patient/Alter). Die Diagnose
+// steht separat in `diagnosis` und ist im Prüfungsmodus ausgeblendet, bis der
+// Lernende sie aufdeckt.
+//
 // Jeder Frage kann optional ein `modelAnswer` (Musterantwort / Prüfer-Erwartung)
 // beigefügt werden — als Lernhilfe und als Referenz für die LLM-Bewertung.
 // =============================================================================
@@ -40,7 +44,8 @@ var caseSeries = [
   // ---------------------------------------------------------------------------
   {
     id: 1,
-    caseTitle: "Fall 1: Akute Sigmadivertikulitis (Herr Peter Keller, 61 J)",
+    caseTitle: "Fall 1: Herr Peter Keller, 61 J",
+    diagnosis: "Akute Sigmadivertikulitis",
     initialVignette: "Herr Peter Keller, 61 Jahre, stellt sich mit seit gestern bestehenden, dumpfen, linksseitigen Unterbauchschmerzen ohne Ausstrahlung vor. Zusätzlich subfebrile Temperatur (37,9 °C). Vorerkrankung: arterielle Hypertonie seit 5 Jahren (Beloc Zok). Z. n. Appendektomie. Vegetative Anamnese bis auf Fieber unauffällig.",
     phases: [
       { phaseName: "Teil 1: Anamnese und körperliche Untersuchung", questions: [
@@ -83,7 +88,8 @@ var caseSeries = [
   // ---------------------------------------------------------------------------
   {
     id: 2,
-    caseTitle: "Fall 2: Akute Pyelonephritis (Frau Bettina Berger, 61 J)",
+    caseTitle: "Fall 2: Frau Bettina Berger, 61 J",
+    diagnosis: "Akute Pyelonephritis",
     initialVignette: "Frau Bettina Berger, 61 Jahre, stellt sich mit seit gestern plötzlich aufgetretenen, dauerhaften rechtsseitigen Flankenschmerzen vor, die nicht ausstrahlen. Begleitend Fieber (38,6 °C), Schüttelfrost, Dysurie, Pollakisurie und Nykturie. Vorerkrankung: arterielle Hypertonie (Beloc Zok). Z. n. Appendektomie.",
     phases: [
       { phaseName: "Teil 1: Anamnese und körperliche Untersuchung", questions: [
@@ -126,7 +132,8 @@ var caseSeries = [
   // ---------------------------------------------------------------------------
   {
     id: 3,
-    caseTitle: "Fall 3: Bandscheibenvorfall L5/S1 (Herr Gerhard Heckel, 58 J)",
+    caseTitle: "Fall 3: Herr Gerhard Heckel, 58 J",
+    diagnosis: "Bandscheibenvorfall L5/S1",
     initialVignette: "Herr Gerhard Heckel, 58 Jahre, stellt sich mit seit gestern bestehenden starken Rückenschmerzen vor, die über die Außenseite des linken Oberschenkels und die Innenseite des Unterschenkels bis zum medialen Fußrand ausstrahlen. Auslöser: lange sitzende Autofahrt. Begleitend Taubheitsgefühl und Kribbeln, Schmerzstärke 8/10.",
     phases: [
       { phaseName: "Teil 1: Anamnese und körperliche Untersuchung", questions: [
@@ -169,7 +176,8 @@ var caseSeries = [
   // ---------------------------------------------------------------------------
   {
     id: 4,
-    caseTitle: "Fall 4: Akute Cholezystitis (Frau Iris Keller, 55 J)",
+    caseTitle: "Fall 4: Frau Iris Keller, 55 J",
+    diagnosis: "Akute Cholezystitis",
     initialVignette: "Frau Iris Keller, 55 Jahre, stellt sich mit seit heute Nacht bestehenden, plötzlich aufgetretenen Schmerzen im rechten Oberbauch mit Ausstrahlung in die rechte Schulter vor. Begleitend Übelkeit nach fettreichem Essen, subfebrile Temperatur. Blutdruck 140/90 mmHg.",
     phases: [
       { phaseName: "Teil 1: Anamnese und körperliche Untersuchung", questions: [
@@ -212,7 +220,8 @@ var caseSeries = [
   // ---------------------------------------------------------------------------
   {
     id: 5,
-    caseTitle: "Fall 5: Hyperthyreose (Frau Anna Vogt, 43 J)",
+    caseTitle: "Fall 5: Frau Anna Vogt, 43 J",
+    diagnosis: "Hyperthyreose",
     initialVignette: "Frau Anna Vogt, 43 Jahre, BMI 20,7 kg/m², stellt sich mit seit einem Monat bestehender innerer Unruhe, Herzklopfen (Palpitationen), Müdigkeit, Schlafstörung und Kloßgefühl im Hals vor. Seit einer Woche zusätzlich mehrmals täglich Durchfall. Kein Fieber, kein Infekthinweis.",
     phases: [
       { phaseName: "Teil 1: Anamnese und körperliche Untersuchung", questions: [

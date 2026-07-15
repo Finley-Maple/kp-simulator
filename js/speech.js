@@ -17,15 +17,17 @@
     return out.replace(/\s+/g, " ").trim();
   }
 
-  function speak(text) {
-    if (!("speechSynthesis" in window)) return;
+  function speak(text, opts) {
+    opts = opts || {};
+    if (!("speechSynthesis" in window)) { if (opts.onend) opts.onend(); return; }
     try {
       window.speechSynthesis.cancel();
       var utter = new SpeechSynthesisUtterance(stripHints(text));
       utter.lang = "de-DE";
       utter.rate = 0.95;
+      if (opts.onend) utter.onend = opts.onend;
       window.speechSynthesis.speak(utter);
-    } catch (e) { /* no-op */ }
+    } catch (e) { if (opts.onend) opts.onend(); }
   }
 
   // ---- Dictation via Web Speech API (webkitSpeechRecognition) --------------

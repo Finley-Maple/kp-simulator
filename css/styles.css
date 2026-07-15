@@ -91,6 +91,8 @@ textarea:focus, input:focus, select:focus { outline: none; border-color: var(--b
 .muted { color:var(--text-muted); }
 .small { font-size:12px; }
 .hidden { display:none; }
+.linklike { background:none; border:0; padding:0; color:var(--text-accent); cursor:pointer; font-size:inherit; text-decoration:underline; }
+.linklike:hover { background:none; opacity:0.8; }
 
 #rec-status { font-size:13px; color:var(--text-danger); }
 #feedback-box { margin-top:10px; background:var(--bg-success); border-radius:var(--radius); padding:12px 14px; }

@@ -19,9 +19,12 @@
       </div>
     </div>
     <div class="controls">
-      <button id="btn-prev-case" aria-label="Vorheriger Fall"><i class="ti ti-arrow-left" aria-hidden="true"></i> Fall</button>
-      <button id="btn-next-case">Fall <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
-      <button id="btn-random-case" aria-label="Zufälliger Fall"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+      <label class="small" style="display:flex; align-items:center; gap:5px; margin-right:4px;" title="Frage und Diagnose ausblenden">
+        <input id="exam-mode" type="checkbox" checked> Prüfungsmodus
+      </label>
+      <button id="btn-prev-case" aria-label="Voriger Fall"><i class="ti ti-arrow-left" aria-hidden="true"></i> Voriger Fall</button>
+      <button id="btn-next-case" aria-label="Nächster Fall">Nächster Fall <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+      <button id="btn-random-case" aria-label="Zufälliger Fall"><i class="ti ti-refresh" aria-hidden="true"></i> Zufällig</button>
     </div>
   </div>
 
@@ -30,6 +33,11 @@
   <div class="split">
     <div class="panel">
       <p id="case-title" class="case-title"></p>
+      <p class="small" style="margin:0 0 8px;">
+        <span class="muted">Diagnose: </span>
+        <button id="reveal-diagnosis" class="linklike">aufdecken</button>
+        <span id="diagnosis-text" class="hidden" style="color:var(--text-accent);"></span>
+      </p>
       <p id="vignette" class="vignette"></p>
       <div class="tracker-head">
         <p class="small muted" style="margin:0 0 8px;">Fortschritt</p>
@@ -40,7 +48,8 @@
     <div>
       <div class="panel" style="margin-bottom:10px;">
         <span id="phase-badge" class="badge"></span>
-        <p id="question-text" class="question-text"></p>
+        <p id="question-hidden" class="question-text muted"><i class="ti ti-volume" aria-hidden="true"></i> Der Prüfer stellt die Frage. Klicken Sie auf „Vorlesen“ — oder <button id="reveal-question" class="linklike">Frage anzeigen</button>.</p>
+        <p id="question-text" class="question-text hidden"></p>
         <details id="model-answer" class="model-answer hidden">
           <summary>Musterlösung / erwartete Kernpunkte anzeigen</summary>
           <div id="model-answer-body" class="ma-body"></div>
@@ -50,16 +59,18 @@
       <div class="row" style="margin-bottom:8px;">
         <button id="btn-read"><i class="ti ti-player-play" aria-hidden="true"></i> Vorlesen</button>
         <button id="btn-record"><i class="ti ti-microphone" aria-hidden="true"></i> Aufnehmen</button>
-        <span id="rec-status" class="hidden">Zuhören …</span>
+        <span id="rec-status" class="hidden">Aufnahme läuft …</span>
         <span id="timer" class="spacer mono muted small">00:00</span>
       </div>
 
-      <textarea id="answer" class="answer" rows="6" placeholder="Antwort tippen oder diktieren …"></textarea>
-      <p id="rec-warning" class="small muted hidden" style="margin:0 0 8px;">Spracheingabe ist in diesem Browser nicht verfügbar. Nutzen Sie die OS-Diktierfunktion (Fn Fn auf Mac, Win+H auf Windows) oder tippen Sie.</p>
+      <audio id="answer-audio" class="hidden" controls style="width:100%; margin:0 0 8px;"></audio>
+
+      <textarea id="answer" class="answer" rows="6" placeholder="Antwort tippen, aufnehmen oder transkribieren …"></textarea>
+      <p id="rec-note" class="small muted hidden" style="margin:0 0 8px;"></p>
 
       <div class="row">
         <button id="btn-feedback" style="border:0.5px solid var(--border-strong);"><i class="ti ti-send" aria-hidden="true"></i> Bewertung anfordern</button>
-        <button id="btn-prev-q"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+        <button id="btn-prev-q" aria-label="Vorherige Frage"><i class="ti ti-arrow-left" aria-hidden="true"></i> Vorherige Frage</button>
         <button id="btn-next-q">Nächste Frage <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
       </div>
 
@@ -105,6 +116,17 @@
       <label for="baseurl-input">Basis-URL (optional — z. B. Proxy für DeepSeek)</label>
       <input id="baseurl-input" type="text" autocomplete="off" placeholder="https://ihr-proxy.example.com/v1">
     </div>
+    <div class="field">
+      <label for="tts-voice">Vorlese-Stimme (neuronale TTS — nur mit OpenAI-Schlüssel; sonst Browser-Stimme)</label>
+      <select id="tts-voice">
+        <option value="alloy">Alloy (neutral)</option>
+        <option value="nova">Nova (warm)</option>
+        <option value="shimmer">Shimmer (hell)</option>
+        <option value="onyx">Onyx (tief)</option>
+        <option value="fable">Fable</option>
+        <option value="echo">Echo</option>
+      </select>
+    </div>
     <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin:8px 0;">
       <input id="remember-key" type="checkbox"> Auf diesem Gerät merken (übersteht Neuladen — nur eigenes Gerät)
     </label>
@@ -120,6 +142,7 @@
 <script src="data/cases.js"></script>
 <script src="js/speech.js"></script>
 <script src="js/feedback.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/ui.js"></script>
 <script>KPApp.init();</script>
 </body>

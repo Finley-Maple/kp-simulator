@@ -1,14 +1,33 @@
 // =============================================================================
 // ui.js — DOM rendering + interaction wiring.
 // Depends on: data/cases.js (caseSeries, evaluationInstructions),
-//             js/speech.js (KPSpeech), js/feedback.js (KPFeedback).
+//             js/speech.js (KPSpeech), js/feedback.js (KPFeedback),
+//             js/audio.js (KPAudio — neural TTS, recording, transcription).
 // Exposes window.KPApp.init().
 // =============================================================================
 (function () {
   "use strict";
 
   var STORAGE_KEY = "kp_sim_answered";
-  var state = { caseIdx: 0, qIdx: 0, seconds: 0, timer: null, dictation: null, dictating: false };
+  var EXAM_MODE_KEY = "kp_sim_exam_mode";
+  var state = { caseIdx: 0, qIdx: 0, seconds: 0, timer: null, reading: false, recording: false, examMode: true };
+
+  function loadExamMode() {
+    try { var v = localStorage.getItem(EXAM_MODE_KEY); return v === null ? true : v === "1"; } catch (e) { return true; }
+  }
+  function saveExamMode(on) { try { localStorage.setItem(EXAM_MODE_KEY, on ? "1" : "0"); } catch (e) {} }
+
+  // Apply exam-mode visibility to the current question + diagnosis.
+  function applyExamMode() {
+    var hide = state.examMode;
+    // Question: hidden -> show placeholder + Vorlesen only.
+    $("question-hidden").classList.toggle("hidden", !hide);
+    $("question-text").classList.toggle("hidden", hide);
+    // Diagnosis: exam mode -> show "aufdecken" button, hide the text;
+    //            exam off  -> hide the button, show the text.
+    $("reveal-diagnosis").classList.toggle("hidden", !hide);
+    $("diagnosis-text").classList.toggle("hidden", hide);
+  }
 
   function $(id) { return document.getElementById(id); }
 
@@ -42,27 +61,93 @@
     }, 1000);
   }
 
-  // ---- dictation -----------------------------------------------------------
-  function stopDictation() {
-    state.dictating = false;
-    if (state.dictation) state.dictation.stop();
-    $("btn-record").innerHTML = '<i class="ti ti-microphone" aria-hidden="true"></i> Aufnehmen';
+  // ---- read-aloud (neural TTS + clean stop) --------------------------------
+  function setReadBtn(active) {
+    $("btn-read").innerHTML = active
+      ? '<i class="ti ti-player-stop" aria-hidden="true"></i> Stopp'
+      : '<i class="ti ti-player-play" aria-hidden="true"></i> Vorlesen';
+  }
+  function stopReading() { KPAudio.stopSpeak(); state.reading = false; setReadBtn(false); }
+  function toggleRead() {
+    if (state.reading) { stopReading(); return; }
+    state.reading = true; setReadBtn(true);
+    var voiceEl = $("tts-voice");
+    KPAudio.speak(currentPayload().questionText, {
+      voice: voiceEl ? voiceEl.value : "alloy",
+      onend: function () { state.reading = false; setReadBtn(false); },
+      onerror: function () { state.reading = false; setReadBtn(false); }
+    });
+  }
+
+  // ---- recording (MediaRecorder — real audio + proper stop) ----------------
+  function setRecordBtn(active) {
+    $("btn-record").innerHTML = active
+      ? '<i class="ti ti-player-stop" aria-hidden="true"></i> Stopp (Aufnahme)'
+      : '<i class="ti ti-microphone" aria-hidden="true"></i> Aufnehmen';
+  }
+  function resetRecordingUI() {
+    state.recording = false;
+    setRecordBtn(false);
     $("rec-status").classList.add("hidden");
   }
-  function toggleDictation() {
-    if (state.dictating) { stopDictation(); return; }
-    if (!state.dictation) {
-      state.dictation = KPSpeech.createDictation({
-        onText: function (t) { $("answer").value = t; },
-        onError: function () { $("rec-warning").classList.remove("hidden"); }
-      });
+  function clearPlayback() {
+    var a = $("answer-audio");
+    if (a) {
+      try { if (a.src) URL.revokeObjectURL(a.src); } catch (e) {}
+      a.removeAttribute("src"); a.classList.add("hidden");
     }
-    if (!state.dictation) { $("rec-warning").classList.remove("hidden"); return; }
-    var ok = state.dictation.start($("answer").value);
-    if (!ok) { $("rec-warning").classList.remove("hidden"); return; }
-    state.dictating = true;
-    $("btn-record").innerHTML = '<i class="ti ti-player-stop" aria-hidden="true"></i> Stopp';
-    $("rec-status").classList.remove("hidden");
+    $("rec-note").classList.add("hidden");
+  }
+
+  function toggleRecord() {
+    if (state.recording) { finishRecording(); return; }
+    if (!KPAudio.recordingSupported()) {
+      $("rec-note").textContent = "Aufnahme wird in diesem Browser nicht unterstützt. Bitte tippen Sie Ihre Antwort.";
+      $("rec-note").classList.remove("hidden");
+      return;
+    }
+    clearPlayback();
+    KPAudio.startRecording().then(function () {
+      state.recording = true;
+      setRecordBtn(true);
+      $("rec-status").textContent = "Aufnahme läuft …";
+      $("rec-status").classList.remove("hidden");
+    }).catch(function (err) {
+      resetRecordingUI();
+      $("rec-note").textContent = "Mikrofon nicht verfügbar: " + err.message;
+      $("rec-note").classList.remove("hidden");
+    });
+  }
+
+  function finishRecording() {
+    $("rec-status").textContent = "Verarbeite Aufnahme …";
+    KPAudio.stopRecording().then(function (blob) {
+      resetRecordingUI();
+      if (!blob) return;
+      // Keep the audio: show a replayable player.
+      var a = $("answer-audio");
+      a.src = URL.createObjectURL(blob);
+      a.classList.remove("hidden");
+      // Transcribe into the answer box if an OpenAI key is available.
+      if (KPAudio.hasOpenAIKey()) {
+        $("rec-note").textContent = "Transkribiere …";
+        $("rec-note").classList.remove("hidden");
+        KPAudio.transcribe(blob).then(function (text) {
+          var existing = $("answer").value.trim();
+          $("answer").value = existing ? (existing + " " + text) : text;
+          $("rec-note").textContent = "Transkribiert. Aufnahme bleibt zum Abspielen erhalten.";
+        }).catch(function (err) {
+          $("rec-note").textContent = "Transkription fehlgeschlagen: " + err.message + " Aufnahme bleibt gespeichert; tippen Sie ggf. Ihre Antwort.";
+        });
+      } else {
+        $("rec-note").textContent = "Aufnahme gespeichert (abspielbar). Für automatische Transkription einen OpenAI-Schlüssel hinterlegen — oder Antwort tippen.";
+        $("rec-note").classList.remove("hidden");
+      }
+    }).catch(function (err) {
+      resetRecordingUI();
+      $("rec-note").textContent = "Aufnahme fehlgeschlagen: " + err.message;
+      $("rec-note").classList.remove("hidden");
+    });
   }
 
   // ---- tracker -------------------------------------------------------------
@@ -86,7 +171,10 @@
 
   // ---- main render ---------------------------------------------------------
   function render() {
-    stopDictation();
+    stopReading();
+    if (state.recording) { KPAudio.stopRecording().catch(function () {}); }
+    resetRecordingUI();
+    clearPlayback();
     $("copy-fallback").classList.add("hidden");
     $("feedback-box").classList.add("hidden");
 
@@ -97,9 +185,11 @@
     var phaseShort = current.phaseName.split(":")[0];
 
     $("case-title").textContent = c.caseTitle;
+    $("diagnosis-text").textContent = c.diagnosis || "—";
     $("vignette").textContent = c.initialVignette;
     $("phase-badge").textContent = phaseShort;
     $("question-text").textContent = current.q.text;
+    applyExamMode();
     $("progress").textContent = "Fall " + (state.caseIdx + 1) + "/" + caseSeries.length +
       " · " + phaseShort + " · Frage " + (state.qIdx + 1) + " von " + flat.length;
     $("answer").value = "";
@@ -146,10 +236,10 @@
   }
 
   function requestFeedback() {
-    stopDictation();
+    stopReading();
     var p = currentPayload();
     if (!p.answer) {
-      showFeedback("Bitte geben Sie zuerst eine Antwort ein (tippen oder diktieren).");
+      showFeedback("Bitte geben Sie zuerst eine Antwort ein (tippen, aufnehmen oder transkribieren).");
       return;
     }
     markAnswered(p._c.id + "_" + p._current.q.id);
@@ -213,11 +303,25 @@
 
   // ---- init ----------------------------------------------------------------
   function init() {
-    $("btn-read").addEventListener("click", function () {
-      KPSpeech.speak(currentPayload().questionText);
+    $("btn-read").addEventListener("click", toggleRead);
+    $("btn-record").addEventListener("click", toggleRecord);
+
+    // Reveal toggles (per question/case) + exam-mode switch.
+    $("reveal-question").addEventListener("click", function () {
+      $("question-hidden").classList.add("hidden");
+      $("question-text").classList.remove("hidden");
     });
-    $("btn-record").addEventListener("click", toggleDictation);
-    if (!KPSpeech.supportsDictation()) $("rec-warning").classList.remove("hidden");
+    $("reveal-diagnosis").addEventListener("click", function () {
+      $("reveal-diagnosis").classList.add("hidden");
+      $("diagnosis-text").classList.remove("hidden");
+    });
+    state.examMode = loadExamMode();
+    $("exam-mode").checked = state.examMode;
+    $("exam-mode").addEventListener("change", function () {
+      state.examMode = $("exam-mode").checked;
+      saveExamMode(state.examMode);
+      applyExamMode();
+    });
 
     $("btn-prev-case").addEventListener("click", function () {
       state.caseIdx = (state.caseIdx - 1 + caseSeries.length) % caseSeries.length; state.qIdx = 0; render();

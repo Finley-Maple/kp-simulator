@@ -13,9 +13,13 @@ No build step. Plain HTML/CSS/vanilla JS. Open `index.html` and it runs.
   (Divertikulitis, Pyelonephritis, Bandscheibenvorfall, Cholezystitis,
   Hyperthyreose), each with 4 phases — Anamnese, Radiologie, Chirurgie,
   Innere/Pharma/Notfall — and **60 questions total** with model answers.
-- **Read-aloud** (Web Speech `speechSynthesis`, German voice).
-- **Dictation** (browser `webkitSpeechRecognition`; falls back to OS dictation
-  when unavailable).
+- **Read-aloud** — neural **OpenAI TTS** (natural voice, clean stop) when an
+  OpenAI key is present; automatically falls back to the browser's Web Speech
+  voice otherwise. Pick a voice in the settings panel.
+- **Recording** — records your **actual audio** locally via `MediaRecorder`
+  (proper start/stop, replayable), then **transcribes** it into the answer box
+  via OpenAI when a key is present. With no key, the recording is still kept for
+  replay and you type your answer.
 - **Feedback in three modes** (auto-selected): direct LLM call with your own key,
   the Cowork chat host (`sendPrompt`), or copy-to-clipboard for any assistant.
 - **Progress tracking** per phase (localStorage, non-sensitive).
@@ -27,7 +31,8 @@ kp-simulator/
 ├── index.html            # markup + script includes
 ├── css/styles.css        # all styling (light/dark)
 ├── data/cases.js         # caseSeries + evaluationInstructions  ← edit to reuse
-├── js/speech.js          # TTS + dictation  (window.KPSpeech)
+├── js/speech.js          # browser Web Speech fallback + hint stripping  (window.KPSpeech)
+├── js/audio.js           # neural TTS, MediaRecorder, transcription  (window.KPAudio)
 ├── js/feedback.js        # LLM / host / clipboard feedback  (window.KPFeedback)
 ├── js/ui.js              # rendering + wiring  (window.KPApp)
 └── docs/
